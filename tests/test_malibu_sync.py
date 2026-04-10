@@ -115,6 +115,7 @@ class TestApplyLinearSync:
         synced  = subtitle_tools.apply_linear_sync(entries, offset_ms=500)
         assert synced[0].start_ms == 1500
         assert synced[0].end_ms   == 3500
+        assert synced[0].text == entries[0].text
 
     def test_scale_only(self, sample_srt):
         entries = subtitle_tools.parse_srt(sample_srt)

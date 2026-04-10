@@ -70,6 +70,8 @@ def _xcorr_offset_sec(ref: np.ndarray, hq: np.ndarray, rate: int) -> float:
         offset = (best_k - (len(hq) - 1)) / rate
     """
     corr = correlate(ref, hq, mode="full")
+    # In 'full' mode the zero-lag position is at index (len(hq) - 1).
+    # Subtracting it converts the absolute argmax index to a signed lag.
     lag = int(np.argmax(corr)) - (len(hq) - 1)
     return lag / rate
 

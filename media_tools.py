@@ -12,6 +12,12 @@ import os
 import subprocess
 from typing import Callable
 
+# ── constants ────────────────────────────────────────────────────────────────
+
+# Offsets below this threshold are ignored (avoids adding unnecessary -itsoffset
+# to the ffmpeg command when the drift is below 1 ms).
+_MIN_OFFSET_THRESHOLD_SEC = 0.001
+
 # ── internal helper ─────────────────────────────────────────────────────────
 
 def _run(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
@@ -231,7 +237,7 @@ def remux_with_sync(
     cmd += ["-i", hq_file]
 
     # Input 1 — PT-BR audio (with offset)
-    if abs(offset_sec) > 0.001:
+    if abs(offset_sec) > _MIN_OFFSET_THRESHOLD_SEC:
         cmd += ["-itsoffset", f"{offset_sec:.6f}"]
     cmd += ["-i", hq_file]
 
@@ -290,7 +296,8 @@ def apply_full_sync(
         remaining /= 0.5
     filters.append(f"atempo={remaining:.6f}")
 
-    # adelay adds milliseconds of silence at the front; negative means trim
+    # adelay adds milliseconds of silence at the front; the N|N syntax applies
+    # the same delay to all channels (works for both mono and stereo).
     if audio_offset_ms >= 0:
         filters.append(f"adelay={audio_offset_ms:.0f}|{audio_offset_ms:.0f}")
         trim_start = None

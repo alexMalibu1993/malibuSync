@@ -65,6 +65,21 @@ def _streams_of_type(streams: list[dict], codec_type: str) -> list[dict]:
 
 # ── main application ──────────────────────────────────────────────────────────
 
+def _pick_stream_label(candidates: list[dict], preferred_idx: int | None) -> str:
+    """
+    Return the display label for the stream in *candidates* whose index matches
+    *preferred_idx*.  Falls back to the first stream's label, or an empty string
+    when *candidates* is empty.
+    """
+    if not candidates:
+        return ""
+    if preferred_idx is not None:
+        for s in candidates:
+            if s["index"] == preferred_idx:
+                return _stream_label(s)
+    return _stream_label(candidates[0])
+
+
 class MalibuSyncApp(tk.Tk):
     """Root window for MalibuSync."""
 
@@ -331,22 +346,13 @@ class MalibuSyncApp(tk.Tk):
         vid_idx  = media_tools.find_stream(streams, "video")
         sub_idx  = media_tools.find_stream(streams, "subtitle", "por")
 
-        def _pick(candidates: list[dict], preferred_idx: int | None) -> str:
-            if preferred_idx is None or not candidates:
-                return candidates[0] if candidates else ""
-            # Find label for preferred index
-            for s, lbl in zip(candidates, [_stream_label(c) for c in candidates]):
-                if s["index"] == preferred_idx:
-                    return lbl
-            return _stream_label(candidates[0]) if candidates else ""
-
         if audio_labels:
-            self._hq_en_audio_var.set(  _pick(audio_streams, en_idx))
-            self._hq_ptbr_audio_var.set(_pick(audio_streams, ptbr_idx or en_idx))
+            self._hq_en_audio_var.set(  _pick_stream_label(audio_streams, en_idx))
+            self._hq_ptbr_audio_var.set(_pick_stream_label(audio_streams, ptbr_idx or en_idx))
         if video_labels:
             self._hq_video_var.set(video_labels[0])
         if sub_labels:
-            self._hq_sub_var.set(_pick(sub_streams, sub_idx))
+            self._hq_sub_var.set(_pick_stream_label(sub_streams, sub_idx))
 
     def _populate_ref_dropdowns(self) -> None:
         streams = self._ref_streams
@@ -356,16 +362,8 @@ class MalibuSyncApp(tk.Tk):
         self._ref_en_audio_cb["values"] = audio_labels
         en_idx = media_tools.find_stream(streams, "audio", "eng")
 
-        def _pick(candidates: list[dict], preferred_idx: int | None) -> str:
-            if preferred_idx is None or not candidates:
-                return candidates[0] if candidates else ""
-            for s, lbl in zip(candidates, [_stream_label(c) for c in candidates]):
-                if s["index"] == preferred_idx:
-                    return lbl
-            return _stream_label(candidates[0]) if candidates else ""
-
         if audio_labels:
-            self._ref_en_audio_var.set(_pick(audio_streams, en_idx))
+            self._ref_en_audio_var.set(_pick_stream_label(audio_streams, en_idx))
 
     # ────────────────────────────────────────────────────────────────────────
     # Sync calculation
